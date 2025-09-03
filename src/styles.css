@@ -1,0 +1,72 @@
+body {
+  background: #222;
+  color: #eee;
+  font-family: sans-serif;
+  margin: 0;
+}
+
+.app {
+  padding: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.panel {
+  background: #333;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.chip {
+  border: 2px solid;
+  padding: 0.25rem 0.5rem;
+  border-radius: 16px;
+  margin: 0.25rem;
+  display: inline-block;
+  font-size: 0.9rem;
+  cursor: grab;
+}
+.chip.JOB { border-color: #4ea1ff; }
+.chip.FACT { border-color: #f2e94e; }
+.chip.SHORT { border-color: #6cc24a; }
+.chip.QUICK { border-color: #4ecdc4; }
+.chip.TONE { border-color: #b28dd9; }
+.chip.OFFTOPIC { border-color: #ff6b6b; }
+
+.tokenbar {
+  background: #555;
+  height: 10px;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.tokenfill {
+  background: #4ecdc4;
+  height: 100%;
+}
+
+.result {
+  background: #333;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+.result.FAIL { border-left: 4px solid #ff6b6b; }
+.result.MEH { border-left: 4px solid #f2e94e; }
+.result.GOOD { border-left: 4px solid #6cc24a; }
+.result.GREAT { border-left: 4px solid #4ea1ff; }
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #444;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
