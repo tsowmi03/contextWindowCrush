@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2025-08-01T00:00:00Z",
+  "model": "demo-fallback",
+  "summaryTileText": "It lives in eucalyptus forests and eats young leaves.",
+  "quickFacts": { "HABITAT": ["Lives in eucalyptus forests", "Needs leafy trees nearby"] },
+  "resultCards": [
+    { "band": "FAIL",  "text": "Mission missed or key facts missing.", "hint": "Add Job and both facts." },
+    { "band": "MEH",   "text": "Some info, but off-topic or messy.",   "hint": "Remove Off-Topic; try Short Version." },
+    { "band": "GOOD",  "text": "Clear and mostly complete.",           "hint": "Can you use fewer tiles?" },
+    { "band": "GREAT", "text": "Concise, both key facts, neat format.", "hint": "Nice compression!" }
+  ]
+}
