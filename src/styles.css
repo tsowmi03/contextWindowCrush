@@ -147,6 +147,142 @@ h1 { margin: 0 0 12px; font-size: 20px; font-weight: 700; color: var(--accent); 
 .score-value.negative { color: var(--fail); }
 .score-value.neutral { color: var(--muted); }
 
+.level-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border-radius: 8px;
+}
+
+.level-nav button {
+  background: #24305a;
+  color: var(--text);
+  border: 1px solid #3a3f63;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.level-nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.level-nav button.locked {
+  background: #2a1f3d;
+  border-color: #3a2f53;
+  color: var(--muted);
+}
+
+.level-nav button:hover:not(:disabled) {
+  background: #2b3766;
+}
+
+.level-indicator {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.progress-header {
+  margin-bottom: 16px;
+}
+
+.score-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 8px;
+  background: var(--panel);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.total-points {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.medal {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.medal-bronze { background: #cd7f32; color: white; }
+.medal-silver { background: #c0c0c0; color: #333; }
+.medal-gold { background: #ffd700; color: #333; }
+.medal-platinum { background: #e5e4e2; color: #333; }
+
+.level-scores {
+  display: flex;
+  gap: 8px;
+}
+
+.level-score {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.level-score.current {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.level-progress {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.progress-label {
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.unlock-requirement {
+  color: var(--meh);
+  font-size: 10px;
+}
+
+.medal-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--good);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 1000;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.new-best {
+  color: var(--good);
+  font-weight: 600;
+  font-size: 10px;
+  margin-left: 8px;
+}
+
 @media (max-width: 960px) {
   .grid { grid-template-columns: 1fr; }
 }

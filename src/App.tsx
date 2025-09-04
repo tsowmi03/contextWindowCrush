@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Band, Chip } from './types';
 import { computeScore, pickResultCard, totalTokens } from './engine';
-import { level3, generatedText } from './levels';
+import { allLevels, generatedText } from './levels';
 import MissionPanel from './components/MissionPanel';
 import Bin from './components/Bin';
 import Palette from './components/Palette';
@@ -24,8 +24,31 @@ type ResultView = {
   breakdown?: ScoreBreakdown;
 } | null;
 
+// Level progression requirements
+const LEVEL_REQUIREMENTS = {
+  0: 30, // Level 1 needs 30+ points to unlock Level 2
+  1: 35, // Level 2 needs 35+ points to unlock Level 3  
+  2: 40  // Level 3 needs 40+ points for completion
+};
+
+// Medal thresholds (cumulative points across all levels)
+const MEDAL_THRESHOLDS = {
+  bronze: 100,
+  silver: 150, 
+  gold: 200,
+  platinum: 250
+};
+
+type Medal = 'bronze' | 'silver' | 'gold' | 'platinum' | null;
+
 export const App: React.FC = () => {
-  const level = level3;
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+  const [levelScores, setLevelScores] = useState<number[]>([0, 0, 0]); // Best score for each level
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [currentMedal, setCurrentMedal] = useState<Medal>(null);
+  const [showMedalToast, setShowMedalToast] = useState(false);
+  
+  const level = allLevels[currentLevelIndex];
   const [selected, setSelected] = useState<Chip[]>([]);
   const [toast, setToast] = useState<string>('');
   const [result, setResult] = useState<ResultView>(null);
@@ -35,6 +58,22 @@ export const App: React.FC = () => {
   const available = useMemo(() => level.chips.filter(c => !selectedIds.has(c.id)), [level.chips, selectedIds]);
 
   const budget = level.budget;
+
+  // Check if next level is unlocked
+  const isNextLevelUnlocked = useMemo(() => {
+    if (currentLevelIndex >= allLevels.length - 1) return false;
+    const requiredScore = LEVEL_REQUIREMENTS[currentLevelIndex as keyof typeof LEVEL_REQUIREMENTS];
+    return levelScores[currentLevelIndex] >= requiredScore;
+  }, [currentLevelIndex, levelScores]);
+
+  // Calculate medal based on total points
+  const calculateMedal = (points: number): Medal => {
+    if (points >= MEDAL_THRESHOLDS.platinum) return 'platinum';
+    if (points >= MEDAL_THRESHOLDS.gold) return 'gold';
+    if (points >= MEDAL_THRESHOLDS.silver) return 'silver';
+    if (points >= MEDAL_THRESHOLDS.bronze) return 'bronze';
+    return null;
+  };
 
   const drop = (id: string) => {
     if (selectedIds.has(id)) return; // no duplicates
@@ -66,6 +105,26 @@ export const App: React.FC = () => {
   const run = () => {
     const { band, quality } = computeScore(level, selected);
     const card = pickResultCard(level, band);
+    
+    // Update best score for current level
+    const newLevelScores = [...levelScores];
+    if (quality > newLevelScores[currentLevelIndex]) {
+      newLevelScores[currentLevelIndex] = quality;
+      setLevelScores(newLevelScores);
+      
+      // Update total points and check for medal upgrades
+      const newTotal = newLevelScores.reduce((sum, score) => sum + score, 0);
+      const oldMedal = currentMedal;
+      const newMedal = calculateMedal(newTotal);
+      
+      setTotalPoints(newTotal);
+      
+      if (newMedal !== oldMedal && newMedal) {
+        setCurrentMedal(newMedal);
+        setShowMedalToast(true);
+        setTimeout(() => setShowMedalToast(false), 3000);
+      }
+    }
     
     // Calculate detailed breakdown for educational feedback
     const hasJob = selected.some(c => c.type === 'JOB');
@@ -115,15 +174,78 @@ export const App: React.FC = () => {
     setShowBreakdown(false);
   };
 
+  const nextLevel = () => {
+    if (currentLevelIndex < allLevels.length - 1 && isNextLevelUnlocked) {
+      setCurrentLevelIndex(prev => prev + 1);
+      reset();
+    }
+  };
+
+  const prevLevel = () => {
+    if (currentLevelIndex > 0) {
+      setCurrentLevelIndex(prev => prev - 1);
+      reset();
+    }
+  };
+
   // Accessibility: clear toast on unmount
   useEffect(() => () => window.clearTimeout((window as any).__toastTimer), []);
 
   return (
     <div className="app">
+      {/* Progress Header */}
+      <div className="progress-header">
+        <div className="level-nav">
+          <button onClick={prevLevel} disabled={currentLevelIndex === 0}>← Previous</button>
+          <span className="level-indicator">Level {currentLevelIndex + 1} of {allLevels.length}</span>
+          <button 
+            onClick={nextLevel} 
+            disabled={!isNextLevelUnlocked}
+            className={isNextLevelUnlocked ? '' : 'locked'}
+          >
+            Next → {!isNextLevelUnlocked && `(Need ${LEVEL_REQUIREMENTS[currentLevelIndex as keyof typeof LEVEL_REQUIREMENTS]}+ pts)`}
+          </button>
+        </div>
+        
+        <div className="score-display">
+          <div className="total-points">Total Points: {totalPoints}</div>
+          {currentMedal && (
+            <div className={`medal medal-${currentMedal}`}>
+              🏅 {currentMedal.charAt(0).toUpperCase() + currentMedal.slice(1)} Medal
+            </div>
+          )}
+          <div className="level-scores">
+            {levelScores.map((score, i) => (
+              <span key={i} className={`level-score ${i === currentLevelIndex ? 'current' : ''}`}>
+                L{i + 1}: {score}pts
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Medal Toast */}
+      {showMedalToast && currentMedal && (
+        <div className="medal-toast">
+          🎉 {currentMedal.charAt(0).toUpperCase() + currentMedal.slice(1)} Medal Earned! 🎉
+        </div>
+      )}
+
       <h1>Context Window Crush</h1>
       <div className="grid">
         <div className="col">
           <MissionPanel name={level.name} mission={level.mission} />
+          {/* Show current level progress */}
+          <div className="level-progress">
+            <div className="progress-label">
+              Best Score: {levelScores[currentLevelIndex]} pts
+            </div>
+            {!isNextLevelUnlocked && currentLevelIndex < allLevels.length - 1 && (
+              <div className="unlock-requirement">
+                🔒 Need {LEVEL_REQUIREMENTS[currentLevelIndex as keyof typeof LEVEL_REQUIREMENTS]}+ points to unlock next level
+              </div>
+            )}
+          </div>
         </div>
         <div className="col">
           <Bin selected={selected} onDrop={drop} onRemove={remove} budget={budget} />
@@ -142,6 +264,9 @@ export const App: React.FC = () => {
                       aria-expanded={showBreakdown}
                     >
                       Score: {result.breakdown.quality} {showBreakdown ? '▼' : '▶'}
+                      {result.breakdown.quality > levelScores[currentLevelIndex] && (
+                        <span className="new-best"> NEW BEST!</span>
+                      )}
                     </button>
                     {showBreakdown && (
                       <div className="score-breakdown" role="region" aria-label="Score breakdown">
@@ -202,9 +327,6 @@ export const App: React.FC = () => {
             <div className="toast" role="status" aria-live="polite">
               {toast}
             </div>
-            {/* TODO: Popover on Quick Facts using generatedText.quickFacts.HABITAT */}
-            {/* TODO: Level select for more configs */}
-            {/* TODO: Keyboard add/remove */}
           </div>
         </div>
       </div>
