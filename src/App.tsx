@@ -7,13 +7,29 @@ import Bin from './components/Bin';
 import Palette from './components/Palette';
 import ResultCard from './components/ResultCard';
 
-type ResultView = { band: Band; text: string; hint: string } | null;
+type ScoreBreakdown = {
+  hasJob: boolean;
+  relevance: number;
+  penalties: number;
+  fidelityRisk: number;
+  quickMatches: number;
+  missingCriticals: number;
+  quality: number;
+};
+
+type ResultView = { 
+  band: Band; 
+  text: string; 
+  hint: string;
+  breakdown?: ScoreBreakdown;
+} | null;
 
 export const App: React.FC = () => {
   const level = level3;
   const [selected, setSelected] = useState<Chip[]>([]);
   const [toast, setToast] = useState<string>('');
   const [result, setResult] = useState<ResultView>(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   const selectedIds = useMemo(() => new Set(selected.map(c => c.id)), [selected]);
   const available = useMemo(() => level.chips.filter(c => !selectedIds.has(c.id)), [level.chips, selectedIds]);
@@ -48,14 +64,55 @@ export const App: React.FC = () => {
   };
 
   const run = () => {
-    const { band } = computeScore(level, selected);
+    const { band, quality } = computeScore(level, selected);
     const card = pickResultCard(level, band);
-    setResult({ band: card.band, text: card.text, hint: card.hint });
+    
+    // Calculate detailed breakdown for educational feedback
+    const hasJob = selected.some(c => c.type === 'JOB');
+    const relevance = selected
+      .filter(c => c.type === 'FACT')
+      .reduce((s, c) => s + (c.relevance || 0), 0);
+    const penalties = selected
+      .filter(c => c.type === 'OFFTOPIC')
+      .reduce((s, c) => s + (c.penalty || 0), 0);
+    const fidelityRisk = selected
+      .filter(c => c.type === 'SHORT')
+      .reduce((s, c) => s + ((c.fidelityRisk || 0) * 10), 0);
+    const quickMatches = selected.filter(c => c.type === 'QUICK').length;
+    
+    // Calculate missing criticals
+    const selectedIds = new Set(selected.map(c => c.id));
+    const covered = new Set<string>();
+    for (const chip of selected) {
+      if (chip.type === 'FACT') covered.add(chip.id);
+      if (chip.type === 'SHORT' && chip.replaces) {
+        for (const r of chip.replaces) covered.add(r);
+      }
+    }
+    const missingCriticals = level.criticalFactIds.filter(id => !covered.has(id)).length;
+    
+    const breakdown: ScoreBreakdown = {
+      hasJob,
+      relevance,
+      penalties,
+      fidelityRisk,
+      quickMatches,
+      missingCriticals,
+      quality
+    };
+    
+    setResult({ 
+      band: card.band, 
+      text: card.text, 
+      hint: card.hint,
+      breakdown
+    });
   };
 
   const reset = () => {
     setSelected([]);
     setResult(null);
+    setShowBreakdown(false);
   };
 
   // Accessibility: clear toast on unmount
@@ -75,7 +132,66 @@ export const App: React.FC = () => {
           <div className="panel" aria-label="Outcome Panel">
             <h3>Outcome</h3>
             {result ? (
-              <ResultCard band={result.band} text={result.text} hint={result.hint} />
+              <div>
+                <ResultCard band={result.band} text={result.text} hint={result.hint} />
+                {result.breakdown && (
+                  <div className="score-section">
+                    <button 
+                      className="breakdown-toggle"
+                      onClick={() => setShowBreakdown(!showBreakdown)}
+                      aria-expanded={showBreakdown}
+                    >
+                      Score: {result.breakdown.quality} {showBreakdown ? '▼' : '▶'}
+                    </button>
+                    {showBreakdown && (
+                      <div className="score-breakdown" role="region" aria-label="Score breakdown">
+                        <div className="score-item">
+                          <span className="score-label">Job Instructions:</span>
+                          <span className={`score-value ${result.breakdown.hasJob ? 'positive' : 'negative'}`}>
+                            {result.breakdown.hasJob ? '+20' : '0'}
+                          </span>
+                        </div>
+                        <div className="score-item">
+                          <span className="score-label">Fact Relevance:</span>
+                          <span className={`score-value ${result.breakdown.relevance > 0 ? 'positive' : 'neutral'}`}>
+                            +{result.breakdown.relevance * 3}
+                          </span>
+                        </div>
+                        <div className="score-item">
+                          <span className="score-label">Quick Facts Bonus:</span>
+                          <span className={`score-value ${result.breakdown.quickMatches > 0 ? 'positive' : 'neutral'}`}>
+                            +{result.breakdown.quickMatches * 5}
+                          </span>
+                        </div>
+                        <div className="score-item">
+                          <span className="score-label">Off-Topic Penalty:</span>
+                          <span className={`score-value ${result.breakdown.penalties > 0 ? 'negative' : 'neutral'}`}>
+                            -{result.breakdown.penalties * 2}
+                          </span>
+                        </div>
+                        <div className="score-item">
+                          <span className="score-label">Fidelity Risk:</span>
+                          <span className={`score-value ${result.breakdown.fidelityRisk > 0 ? 'negative' : 'neutral'}`}>
+                            -{Math.round(result.breakdown.fidelityRisk)}
+                          </span>
+                        </div>
+                        <div className="score-item">
+                          <span className="score-label">Missing Critical Facts:</span>
+                          <span className={`score-value ${result.breakdown.missingCriticals > 0 ? 'negative' : 'neutral'}`}>
+                            -{result.breakdown.missingCriticals * 25}
+                          </span>
+                        </div>
+                        <div className="score-item score-total">
+                          <span className="score-label">Total Quality:</span>
+                          <span className={`score-value ${result.breakdown.quality >= 40 ? 'positive' : result.breakdown.quality >= 20 ? 'neutral' : 'negative'}`}>
+                            {result.breakdown.quality}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="empty-note">Press RUN to see result</div>
             )}
@@ -86,7 +202,6 @@ export const App: React.FC = () => {
             <div className="toast" role="status" aria-live="polite">
               {toast}
             </div>
-            {/* TODO: Tooltip on Short Version using generatedText.summaryTileText */}
             {/* TODO: Popover on Quick Facts using generatedText.quickFacts.HABITAT */}
             {/* TODO: Level select for more configs */}
             {/* TODO: Keyboard add/remove */}

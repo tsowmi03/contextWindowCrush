@@ -101,6 +101,52 @@ h1 { margin: 0 0 12px; font-size: 20px; font-weight: 700; color: var(--accent); 
 
 .toast { min-height: 20px; color: var(--meh); margin-top: 6px; }
 
+.score-section { margin-top: 8px; }
+.breakdown-toggle {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.breakdown-toggle:hover { background: rgba(108, 198, 255, 0.1); }
+.breakdown-toggle:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.score-breakdown {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.score-total {
+  border-top: 1px solid #3a3f63;
+  margin-top: 4px;
+  padding-top: 6px;
+  font-weight: 600;
+}
+
+.score-label { color: var(--muted); }
+
+.score-value.positive { color: var(--good); }
+.score-value.negative { color: var(--fail); }
+.score-value.neutral { color: var(--muted); }
+
 @media (max-width: 960px) {
   .grid { grid-template-columns: 1fr; }
 }
